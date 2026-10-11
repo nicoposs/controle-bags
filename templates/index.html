@@ -14,7 +14,7 @@
         <div class="container mx-auto px-6 py-4 flex flex-col md:flex-row justify-between items-center">
             <div>
                 <h1 class="text-2xl font-black tracking-wider uppercase">Painel de Controle - BAGS</h1>
-                <p class="text-gray-400 text-xs">Gestão de pesos, moldes, materiais e histórico</p>
+                <p class="text-gray-400 text-xs">Gestão de pesos, moldes e histórico industrial</p>
             </div>
             
             <div class="mt-4 md:mt-0">
@@ -54,7 +54,7 @@
         <!-- Grid Principal: Formulário e Gráfico com Filtros -->
         <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-8">
             
-            <!-- Formulário de Cadastro com Material -->
+            <!-- Formulário de Cadastro (Sem material) -->
             <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200">
                 <h2 class="text-lg font-bold text-black mb-4 pb-2 border-b-2 border-red-600">Nova Entrada de BAG</h2>
                 <form method="POST" class="space-y-4">
@@ -65,15 +65,6 @@
                     <div>
                         <label class="block text-gray-700 text-xs font-bold uppercase mb-1">Molde:</label>
                         <input type="text" name="molde" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:border-red-600 text-sm">
-                    </div>
-                    <div>
-                        <label class="block text-gray-700 text-xs font-bold uppercase mb-1">Material:</label>
-                        <select name="material" required class="w-full px-3 py-2 bg-gray-50 border border-gray-300 rounded-md focus:outline-none focus:border-red-600 text-sm">
-                            <option value="PLA">PLA</option>
-                            <option value="PETG">PETG</option>
-                            <option value="ABS">ABS</option>
-                            <option value="Outro">Outro</option>
-                        </select>
                     </div>
                     <div>
                         <label class="block text-gray-700 text-xs font-bold uppercase mb-1">Peso (g):</label>
@@ -89,20 +80,20 @@
                 </form>
             </div>
 
-            <!-- Gráfico com Filtros de Mês e Material -->
+            <!-- Gráfico com Filtros de Código e Mês -->
             <div class="bg-white p-6 rounded-lg shadow-md border border-gray-200 lg:col-span-2 flex flex-col">
                 <div class="flex flex-col xl:flex-row justify-between items-start xl:items-center mb-4 pb-2 border-b border-gray-200 gap-3">
                     <h2 class="text-lg font-bold text-black">Variação de Peso por Código</h2>
                     
-                    <!-- Filtros (Mês e Material) -->
+                    <!-- Filtros (Código e Mês) -->
                     <form method="GET" action="/" class="flex flex-wrap items-center gap-2">
-                        <!-- Filtro de Material -->
+                        <!-- Filtro de Código -->
                         <div class="flex items-center gap-1">
-                            <label class="text-xs font-bold text-gray-600 uppercase">Mat:</label>
-                            <select name="material_filtro" onchange="this.form.submit()" class="px-2 py-1 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-red-600">
+                            <label class="text-xs font-bold text-gray-600 uppercase">Código:</label>
+                            <select name="codigo_filtro" onchange="this.form.submit()" class="px-2 py-1 bg-gray-50 border border-gray-300 rounded-md text-sm focus:outline-none focus:border-red-600">
                                 <option value="">Todos</option>
-                                {% for mat in materiais_disponiveis %}
-                                    <option value="{{ mat }}" {% if material_selecionado == mat %}selected{% endif %}>{{ mat }}</option>
+                                {% for cod in codigos_disponiveis %}
+                                    <option value="{{ cod }}" {% if codigo_selecionado == cod %}selected{% endif %}>{{ cod }}</option>
                                 {% endfor %}
                             </select>
                         </div>
@@ -118,7 +109,7 @@
                             </select>
                         </div>
 
-                        {% if mes_selecionado or material_selecionado %}
+                        {% if mes_selecionado or codigo_selecionado %}
                             <a href="/" class="text-xs text-red-600 hover:underline font-bold ml-1">Limpar</a>
                         {% endif %}
                     </form>
@@ -139,7 +130,6 @@
                         <tr class="bg-black text-white text-xs uppercase tracking-wider">
                             <th class="p-3">Código</th>
                             <th class="p-3">Molde</th>
-                            <th class="p-3">Material</th>
                             <th class="p-3">Peso</th>
                             <th class="p-3">Referência</th>
                             <th class="p-3">Data/Hora</th>
@@ -153,12 +143,9 @@
                         <tr class="hover:bg-gray-50 transition">
                             <td class="p-3 font-bold text-black">{{ row[1] }}</td>
                             <td class="p-3">{{ row[2] }}</td>
-                            <td class="p-3">
-                                <span class="bg-gray-200 text-black text-xs font-bold px-2 py-0.5 rounded">{{ row[5] }}</span>
-                            </td>
                             <td class="p-3 font-semibold text-red-600">{{ row[3] }} g</td>
                             <td class="p-3">{{ row[4] }}</td>
-                            <td class="p-3 text-gray-500 text-xs">{{ row[6] }}</td>
+                            <td class="p-3 text-gray-500 text-xs">{{ row[5] }}</td>
                             {% if is_admin %}
                             <td class="p-3 text-center">
                                 <form action="/apagar/{{ row[0] }}" method="POST" onsubmit="return confirm('Tem certeza que deseja apagar este registro?');" style="display:inline;">
@@ -169,7 +156,7 @@
                         </tr>
                         {% else %}
                         <tr>
-                            <td colspan="7" class="p-6 text-center text-gray-400">Nenhum registro encontrado na base.</td>
+                            <td colspan="6" class="p-6 text-center text-gray-400">Nenhum registro encontrado na base.</td>
                         </tr>
                         {% endfor %}
                     </tbody>
