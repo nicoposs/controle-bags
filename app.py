@@ -18,15 +18,9 @@ def inicializar_banco():
             molde TEXT NOT NULL,
             peso REAL NOT NULL,
             referencia TEXT NOT NULL,
-            material TEXT DEFAULT 'PLA',
             data_registro TIMESTAMP DEFAULT CURRENT_TIMESTAMP
         )
     """)
-  # Garante compatibilidade se a tabela já existia sem a coluna material
-  try:
-    cursor.execute("ALTER TABLE bgas ADD COLUMN material TEXT DEFAULT 'PLA'")
-  except sqlite3.OperationalError:
-    pass  # A coluna já existe
   conexao.commit()
   conexao.close()
 
@@ -46,17 +40,16 @@ def index():
     molde = request.form.get("molde").strip()
     peso_str = request.form.get("peso").strip().replace(",", ".")
     referencia = request.form.get("referencia").strip()
-    material = request.form.get("material").strip()
 
-    if codigo and molde and peso_str and referencia and material:
+    if codigo and molde and peso_str and referencia:
       try:
         peso = float(peso_str)
         cursor.execute(
             """
-                    INSERT INTO bgas (codigo, molde, peso, referencia, material) 
-                    VALUES (?, ?, ?, ?, ?)
+                    INSERT INTO bgas (codigo, molde, peso, referencia) 
+                    VALUES (?, ?, ?, ?)
                 """,
-            (codigo, molde, peso, referencia, material),
+            (codigo, molde, peso, referencia),
         )
         conexao.commit()
       except ValueError:
@@ -73,7 +66,7 @@ def index():
   peso_med = round(estatisticas[1], 2) if estatisticas[1] else 0
   peso_min = round(estatisticas[2], 2) if estatisticas[2] else 0
 
-  # Buscar meses e materiais disponíveis para os filtros
+  # Buscar meses disponíveis e códigos disponíveis para os filtros
   cursor.execute("""
         SELECT DISTINCT strftime('%Y-%m', data_registro) as mes_ano 
         FROM bgas WHERE data_registro IS NOT NULL ORDER BY mes_ano DESC
@@ -81,16 +74,16 @@ def index():
   meses_disponiveis = [row[0] for row in cursor.fetchall()]
 
   cursor.execute(
-      "SELECT DISTINCT material FROM bgas WHERE material IS NOT NULL ORDER BY"
-      " material ASC"
+      "SELECT DISTINCT codigo FROM bgas WHERE codigo IS NOT NULL ORDER BY codigo"
+      " ASC"
   )
-  materiais_disponiveis = [row[0] for row in cursor.fetchall()]
+  codigos_disponiveis = [row[0] for row in cursor.fetchall()]
 
   # Capturar os filtros selecionados pelo usuário
   mes_selecionado = request.args.get("mes_filtro", "")
-  material_selecionado = request.args.get("material_filtro", "")
+  codigo_selecionado = request.args.get("codigo_filtro", "")
 
-  # Montar a consulta SQL com base nos filtros ativos
+  # Montar a consulta SQL do gráfico com base nos filtros ativos
   query = """
         SELECT 
             strftime('%Y-%m', data_registro) as mes_ano,
@@ -105,9 +98,9 @@ def index():
     query += " AND strftime('%Y-%m', data_registro) = ?"
     params.append(mes_selecionado)
 
-  if material_selecionado:
-    query += " AND material = ?"
-    params.append(material_selecionado)
+  if codigo_selecionado:
+    query += " AND codigo = ?"
+    params.append(codigo_selecionado)
 
   query += " GROUP BY mes_ano, codigo ORDER BY mes_ano ASC"
 
@@ -140,10 +133,10 @@ def index():
         "tension": 0.1,
     })
 
-  # Histórico recente (incluindo o material)
+  # Histórico recente
   cursor.execute(
-      "SELECT id, codigo, molde, peso, referencia, material, data_registro FROM"
-      " bgas ORDER BY id DESC LIMIT 10"
+      "SELECT id, codigo, molde, peso, referencia, data_registro FROM bgas"
+      " ORDER BY id DESC LIMIT 10"
   )
   historico = cursor.fetchall()
 
@@ -160,9 +153,9 @@ def index():
       historico=historico,
       is_admin=is_admin,
       meses_disponiveis=meses_disponiveis,
-      materiais_disponiveis=materiais_disponiveis,
+      codigos_disponiveis=codigos_disponiveis,
       mes_selecionado=mes_selecionado,
-      material_selecionado=material_selecionado,
+      codigo_selecionado=codigo_selecionado,
   )
 
 
